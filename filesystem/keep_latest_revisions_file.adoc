@@ -1,0 +1,82 @@
+= Garder les _<n>_ dernières révisions d’un fichier
+:doctype: article
+:encoding: utf-8
+:lang: fr
+:author: Raphaël THERY
+:keywords: ant, allbutfirst
+:revdate: mars 2021
+:revnumber: 1.0.0
+:toc: preamble
+:toc-title: Sommaire
+
+Cette fiche décrit le moyen de supprimer les révisions les plus anciennes d'un fichier en se basant sur le nom de ce dernier.
+Cela est parfaitement adapté à un petit projet/poc, dans le cas contraire regarder une solution comme *logrotate*. 
+
+[IMPORTANT]
+====
+Le code ci-après [underline]#*NE* permet *PAS*# d’obtenir la liste des fichiers les plus récents mais au contraire, celle des plus anciens !
+====
+
+L’utilisation de la balise `<allbutfirst />` permet d’exclure les `nb_files` premiers fichiers qui combinée à un tri, *exclue de fait les fichiers les plus récents*.
+
+[TIP]
+====
+La balise `<allbutfirst />` fonctionne à l’inverse de la balise `<first />`
+====
+
+
+Cette solution possède l’avantage de ne pas se baser sur la date de modification des fichiers, et donc de ne pas les supprimer après un délai imposé. Dès lors chaque fichier peut avoir un cycle de vie différent des autres qui garantit le maintient des `nb_files` fichiers les plus récents.
+
+.Application
+* Purger les révisions les plus anciennes d’un fichier
+tout en préservant les _<nb_files>_ révisions les plus récentes de ce fichier _(exemple : app-2020-04-21.log, app-2020-04-20.log, app-2020-04-19.log, …)_
+
+[IMPORTANT]
+====
+Pour être opérationnel, le `${pattern}` ne doit concerner
+qu’*un seul type de fichiers* à la fois. +
+Le cas échéant ne seront gardés que les _<nb_files>_ les plus récents, *tous types* de fichiers confondus.
+====
+
+.Identifier les révisions les plus anciennes
+[source,xml]
+----
+<path id = "oldest_files">  <1>
+  <allbutfirst count = "${nb_files}">   <2>
+    <sort>
+      <fileset dir = "${patname}">   <3>
+        <include name = "${pattern}" /> <4>
+      </fileset>
+      <reverse>
+        <date />
+      </reverse>
+    </sort>
+  </allbutfirst>
+</path>
+----
+
+Le chemin `oldest_files` <1> embarque la liste des fichiers présents dans l’arborescence `${patname}` <3> répondant au critère de sélection `${pattern}` <4>. Les fichiers sont triés par ordre décroissant (i.e. du plus récent au plus ancien) et ne sont gardés que les `${nb_files}` <2> fichiers suivants.
+
+[CAUTION]
+====
+Le code peut ne pas fonctionner. + 
+Exemple sur une action `delete`.
+====
+
+.Tâche valide
+[source,xml]
+----
+<delete>
+  <resources refid = "oldest_files" />
+</delete>
+----
+
+.Tâche invalide
+[source,xml]
+----
+<delete>
+  <fileset dir = "${patname}">
+    <patternset refid = "oldest_files" />
+  </fileset>
+</delete>
+----
