@@ -1,0 +1,71 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+ |	Description du projet.
+ |
+ |	Turtle59
+ |	<mois-annee>
+ |
+ +-->
+<project name = "MyTemplate" basedir = ".." default = "help">
+
+	<!-- Une propriété fixée devient immuable. L'ordre des déclarations est donc important : spécifique avant général. -->
+	<!-- Fichier des propriétés spécifiques au contexte projet. -->
+	<property file = "${basedir}/${ant.project.name}.properties" />
+	<!-- Fichier de propriétés par défaut. -->
+	<property file = "${basedir}/bin/${ant.project.name}-default.properties" />
+
+
+	<!-- Classpath du projet. -->
+	<path id="project.class.path">
+		<pathelement location = "${basedir}/libs/ant-contrib-1.0b3.jar" />
+		<pathelement location = "${basedir}/libs/jsch-0.1.54.jar" />
+	</path>
+
+
+	<!-- Déclaration des tâches définies dans la lib ant-contrib. -->
+	<taskdef resource = "net/sf/antcontrib/antlib.xml">
+		<classpath refid = "project.class.path" />
+	</taskdef>
+
+	<tstamp>
+		<!-- Date du jour sous plusieurs formats pour horodater les traitements. -->
+		<format property = "DATE-TODAY" pattern = "yyyyMMdd" locale = "fr" />
+		<format property = "DTTM-TODAY" pattern = "yyyyMMdd-HHmmss" locale = "fr" />
+		<format property = "DATE-PRINT" pattern = "dd/MM/yyyy" locale = "fr" />
+	</tstamp>
+
+	<!-- Définition des ressources/constantes projets. -->
+	<property name = "source.home"     value = "${basedir}/src" />
+	<property name = "output.home"     value = "${build.pathroot}" />
+
+
+
+	<!-- Définition des propriétés spécifiques PROJET. -->
+	<!--loadproperties srcFile = "${basedir}/services.properties" /-->
+	<!--propertycopy property = "server.id" from = "key${param1}.server.hostname" override = "true" silent = "true" /-->
+	<!--propertyregex property = "server.name" input = "${server.id}" regexp = "([^\.]*)\..*" select = "\1" /-->
+
+
+
+
+	<!--
+	 |	Initialise le projet
+	 +-->
+	<target name = "setup">
+		<mkdir dir = "${output.home}" />
+
+		<copy file = "${basedir}/bin/${ant.project.name}-default.properties"
+		    tofile = "${basedir}/${ant.project.name}.properties"
+		  overwrite = "false"
+		/>
+	</target>
+
+
+	<!--
+	 |	Génère l'aide en ligne
+	 +-->
+	<target name = "help">
+		<echo message = "Besoin d'aide ?${line.separator}--------------------" />
+		<echo message = "${project.helpnote}" />
+	</target>
+</project>
