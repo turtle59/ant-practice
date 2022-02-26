@@ -1,0 +1,39 @@
+= Chargement des properties (_file_)
+:doctype: article
+:encoding: utf-8
+:lang: fr
+:author: Turtle59
+:keywords: ant, property, loadproperties
+:revdate: mars 2021
+:revnumber: 1.0.0
+
+J’ai pris l’habitude de positionner deux fichiers de propriétés au sein de l’arborescence de mes projets.
+
+Le premier, positionné dans le répertoire `bin` au même niveau 
+que le fichier `build.xml` est vu comme un référentiel de propriétés, immuables alors que le second, à la racine du projet, peut être modifié pour s'adapter au contexte d'exécution de chaque projet.
+
+[NOTE]
+====
+Le fichier présent dans `bin` est enregistré dans un _**scm**_ alors que le second non car il permet de surcharger les valeurs par défaut.
+====
+
+.Exemple de configuration projet
+[%collapsible]
+====
+[source,xml]
+----
+<!-- Une propriété fixée devient immuable. L'ordre des déclarations est donc important : spécifique avant général. -->
+<!-- Fichier des propriétés spécifiques au contexte projet. -->
+<property file = "${basedir}/${ant.project.name}.properties" />  <1>
+<!-- Fichier de propriétés par défaut. -->
+<loadproperties srcFile = "${basedir}/bin/${ant.project.name}-default.properties" />  <2>
+----
+<1> La tâche `<property />` utilisée avec son attribut `file` permet de charger les propriétés contenues dans un fichier [red]##MAIS *NE* génère *AUCUNE ERREUR* si ce dernier est *ABSENT*##.
+<2> La tâche `<loadproperties />` permet de charger les propriétés contenues dans un fichier [red]##MAIS génère une *ERREUR* si le fichier est *ABSENT*##.
+====
+
+Ce dispositif basé sur ces deux fichiers permet d'établir le fonctionnement suivant:
+
+* Le fichier des propriétés présent dans `<projet>/bin` est obligatoire alors que le second, à la racine, reste facultatif.
+
+* Si les deux fichiers sont présents, l’ordre des instructions fait que les propriétés présentes dans le fichier à la racine prendront le dessus sur le second fichier _(présent dans `<projet>/bin`)_.

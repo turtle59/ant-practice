@@ -1,0 +1,21 @@
+= Gérer des données sensibles
+:doctype: article
+:encoding: utf-8
+:lang: fr
+:author: Turtle59
+:keywords: ant
+:revdate: mars 2021
+:revnumber: 1.0.0
+
+Certaines *tâches ant* utilisent des informations sensibles comme un _mot de passe_, une _passphrase_, une _clé privée SSH_, etc.. qui ne doivent pas être exposées à la vue des autres collaborateurs.
+
+Le framework `ant` ne propose pas par défaut de solution pour crypter l’information comme un `ansible-vault`.
+
+Une technique qui n’est pas infaillible mais acceptable consiste à enregistrer les données sensibles d’un projet dans un répertoire protégé et accessible uniquement que par l’utilisateur `${user.home}`.
+
+.Avantage
+* information connue et accessible uniquement que par l’utilisateur
+* script adapté à tous par l’utilisation de la variable d’environnement `${user.home}`.
+
+.Inconvénient
+* Risque d’exposer les données sensibles par l’emploi d’un argument `-verbose` ou d’une tâche `echoproperties`.

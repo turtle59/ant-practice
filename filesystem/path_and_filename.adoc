@@ -1,0 +1,206 @@
+= Capter la bonne dénomination d'un fichier
+:doctype: article
+:encoding: utf-8
+:lang: fr
+:author: Turtle59
+:keywords: ant
+:revdate: fevrier 2022
+:revnumber: 1.0.1
+:toc: left
+:toc-title: Sommaire
+:url-dirname: https://ant.apache.org/manual/Tasks/dirname.html
+:url-basename: https://ant.apache.org/manual/Tasks/basename.html
+:url-ant-contrib: http://ant-contrib.sourceforge.net/tasks/tasks/index.html
+:url-propertyregex: http://ant-contrib.sourceforge.net/tasks/tasks/propertyregex.html
+:url-variabletask: http://ant-contrib.sourceforge.net/tasks/tasks/variable_task.html
+:var-pathname: chemin_complet
+:var-extfile: extension
+:var-filename: nom_du_fichier
+:var-fullname: {var-pathname}/{var-filename}.{var-extfile}
+// 2022-0218 1.0.1 Reformulation et ajout de la solution var.
+
+== Solution standard
+
+_**Ant**_ propose les tâches {url-dirname}[`dirname`] et {url-basename}[`basename`] pour obtenir respectivement le chemin et le nom du fichier. Par ailleurs, avec la tâche {url-basename}[`basename`] il est également possible d’ôter l’extension du fichier pour ne garder que la racine du nom.
+
+.Exemple d'utilisation de `dirname` et `basename`
+[source,xml,subs="+attributes,+quotes"]
+----
+<!-- Définition complète d'un fichier -->
+<property name = "fullname" value = "{var-fullname}" />
+<!-- Nom du chemin conduisant à l'emplacement du fichier -->
+<dirname  property = "mypath" file = "${fullname}" />
+<!-- Nom complet du fichier -->
+<basename property = "myfile" file = "${fullname}" />
+<!-- Nom du fichier sans extension -->
+<basename property = "myfilenoext" file = "${fullname}" suffix = "{var-extfile}" />
+
+<!-- Affichage des propriétés -->
+<echo message = "fullname = '${fullname}'" />
+<echo message = " dirname = '${mypath}'" />
+<echo message = "basename = '${myfile}'" />
+<echo message = "basename(noext) = '${myfilenoext}'" />
+----
+
+.Le résultat attendu
+[source,log,subs="attributes"]
+----
+fullname = '{var-fullname}'
+ dirname = '{var-pathname}'
+basename = '{var-filename}.{var-extfile}'
+basename(noext) = '{var-filename}'
+----
+
+== Limites de la solution & contournements
+
+Lorsque ces deux commandes sont utilisées dans une boucle (`for`, `foreach` du projet *{url-ant-contrib}[ant-contrib]*), elles produisent une information érronée dès la deuxième itération puisque les propriétés _ant_ sont immuables.
+
+.Exemple de code érroné.
+[source,xml,subs="+quotes"]
+----
+<for param = "fullname">
+  <path>
+    <fileset dir = "chemin_complet" includes = "*.extension" />
+  </path>
+  <sequential>
+    <!-- Nom du chemin conduisant à l'emplacement du fichier -->
+    <dirname  property = "mypath" file = "##@##{fullname}" />
+    <!-- Nom complet du fichier -->
+    <basename property = "myfile" file = "##@##{fullname}" />
+    <!-- Nom du fichier sans extension -->
+    <basename property = "myfilenoext" file = "##@##{fullname}" suffix = "{var-extfile}" />
+
+    <echo message = "fullname = ##@##{fullname}" />
+    <echo message = " dirname = ${mypath}" />
+    <echo message = "basename = ${myfile}" />
+  </sequential>
+</for>
+----
+
+[CAUTION]
+====
+Ne pas oublier que l'évaluation de la propriété `fullname` déclarée au niveau de la boucle _(i.e. au niveau du `<for />`)_ doit l'être via le codage `##@##{}` et non l'écriture standard de _ant_ `${}`.
+====
+
+
+.Exemple de résultat érroné
+[source,log,subs="quotes,attributes"]
+----
+fullname = chemin_complet/nom_du_fichier_01.extension
+ dirname = chemin_complet
+basename = nom_du_fichier_01.extension
+
+fullname = [red]##chemin_complet/nom_du_fichier_01.extension##
+ dirname = [red]##chemin_complet##
+basename = [red]##nom_du_fichier_01.extension##
+
+fullname = [red]##chemin_complet/nom_du_fichier_01.extension##
+ dirname = [red]##chemin_complet##
+basename = [red]##nom_du_fichier_01.extension##
+...
+----
+
+
+Pour contourner ce problème, les ressources du projet *{url-ant-contrib}[ant-contrib]* proposent deux approches : la commande {url-variabletask}[`var`] et la commande {url-propertyregex}[`propertyregexp`].
+
+=== Contournement avec `var`
+
+Cette première solution consiste à "_supprimer_" l'existence des deux propriétés `mypath` et `myfile` entre deux itérations de boucles.
+
+Par rapport à l'exemple précédant, il suffit d'ajouter une instruction `<var name = "ma_propriété" unset = "true" />` en début de boucle pour chaque variable concernée.
+
+[source,xml,subs="+quotes"]
+----
+<for param = "fullname">
+  <path>
+    <fileset dir = "chemin_complet" includes = "*.extension" />
+  </path>
+  <sequential>
+    <var name = "mypath" unset = "true" />  <1>
+    <var name = "myfile" unset = "true" />  <2>
+
+    <!-- Nom du chemin conduisant à l'emplacement du fichier -->
+    <dirname  property = "mypath" file = "##@##{fullname}" />   <3>
+    <!-- Nom complet du fichier -->
+    <basename property = "myfile" file = "##@##{fullname}" />   <4>
+    <!-- Nom du fichier sans extension -->
+    <basename property = "myfilenoext" file = "##@##{fullname}" suffix = "{var-extfile}" />
+
+    <echo message = "fullname = ##@##{fullname}" />
+    <echo message = " dirname = ${mypath}" />
+    <echo message = "basename = ${myfile}" />
+  </sequential>
+</for>
+----
+<1> La propriété `mypath` est supprimée artificiellement
+<2> La propriété `myfile` est supprimée artificiellement
+<3> Puisque la propriété `mypath` n'est pas encore initialisée, l'instruction `dirname` peut lui attribuer une valeur
+<4> Puisque la propriété `myfile` n'est pas encore initialisée, l'instruction `filename` peut lui attribuer une valeur
+
+[CAUTION]
+====
+Ne pas oublier que l'évaluation de la propriété `fullname` déclarée au niveau de la boucle _(i.e. au niveau du `<for />`)_ doit l'être via le codage `##@##{}` et non l'écriture standard de _ant_ `${}`.
+====
+
+.Résultat avec l'utilisation de `var`
+[source,log,subs="quotes,attributes"]
+----
+fullname = chemin_complet/nom_du_fichier_01.extension
+ dirname = chemin_complet
+basename = nom_du_fichier_01.extension
+
+fullname = [green]##chemin_complet/nom_du_fichier_02.extension##
+ dirname = [green]##chemin_complet##
+basename = [green]##nom_du_fichier_02.extension##
+
+fullname = [green]##chemin_complet/nom_du_fichier_03.extension##
+ dirname = [green]##chemin_complet##
+basename = [green]##nom_du_fichier_03.extension##
+...
+----
+
+
+=== Contournement avec `propertyregexp`
+
+Dans cette seconde solution, la commande {url-propertyregex}[`propertyregexp`] associée à son attribut `override = "true"` permet d'atteindre le même résultat.
+
+
+[source,xml]
+----
+<for param = "fullname">
+  <path>
+    <fileset dir = "chemin_complet" includes = "*.extension" />
+  </path>
+  <sequential>
+    <propertyregex property = "mypath" input = "@{fullname}" regexp = "(.*)/([^/.]*)" replace = "\1" override = "true" />
+    <propertyregex property = "myfile" input = "@{fullname}" regexp = "(.*)/([^/.]*)" replace = "\2" override = "true" />
+
+    <echo message = "fullname = @{fullname}" />
+    <echo message = " dirname = ${mypath}" />
+    <echo message = "basename = ${myfile}" />
+  </sequential>
+</for>
+----
+
+[CAUTION]
+====
+Ne pas oublier que l'évaluation de la propriété `fullname` déclarée au niveau de la boucle _(i.e. au niveau du `<for />`)_ doit l'être via le codage `##@##{}` et non l'écriture standard de _ant_ `${}`.
+====
+
+.Résultat avec l'utilisation de `propertyregexp`
+[source,log,subs="quotes,attributes"]
+----
+fullname = chemin_complet/nom_du_fichier_01.extension
+ dirname = chemin_complet
+basename = nom_du_fichier_01.extension
+
+fullname = [green]##chemin_complet/nom_du_fichier_02.extension##
+ dirname = [green]##chemin_complet##
+basename = [green]##nom_du_fichier_02.extension##
+
+fullname = [green]##chemin_complet/nom_du_fichier_03.extension##
+ dirname = [green]##chemin_complet##
+basename = [green]##nom_du_fichier_03.extension##
+...
+----
+

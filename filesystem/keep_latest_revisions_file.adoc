@@ -2,7 +2,7 @@
 :doctype: article
 :encoding: utf-8
 :lang: fr
-:author: Raphaël THERY
+:author: Turtle59
 :keywords: ant, allbutfirst
 :revdate: mars 2021
 :revnumber: 1.0.0
@@ -14,7 +14,7 @@ Cela est parfaitement adapté à un petit projet/poc, dans le cas contraire rega
 
 [IMPORTANT]
 ====
-Le code ci-après [underline]#*NE* permet *PAS*# d’obtenir la liste des fichiers les plus récents mais au contraire, celle des plus anciens !
+Le code ci-après [red]##[underline]#*NE* permet *PAS*### d’obtenir la liste des fichiers les plus récents mais au contraire, celle des plus anciens !
 ====
 
 L’utilisation de la balise `<allbutfirst />` permet d’exclure les `nb_files` premiers fichiers qui combinée à un tri, *exclue de fait les fichiers les plus récents*.

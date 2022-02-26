@@ -1,0 +1,18 @@
+= Trucs et astuces
+//:doctype: article
+:encoding: utf-8
+:lang: fr
+:author: Turtle59
+:keywords: ant
+:revdate: fevrier 2022
+:revnumber: 1.0.0
+:toc: left
+:toc-title: Sommaire
+:sectnums:
+
+
+include::target_names.adoc[leveloffset=+2]
+
+include::sensitive_data.adoc[leveloffset=+2]
+
+include::loading_properties.adoc[leveloffset=+2]

@@ -1,0 +1,48 @@
+= Copier & renommer des fichiers
+:doctype: article
+:encoding: utf-8
+:lang: fr
+:author: Turtle59
+:keywords: ant
+:revdate: mars 2021
+:revnumber: 1.0.0
+:toc: left
+:toc-title: Sommaire
+
+L'objectif est d'utiliser une partie de l’arborescence pour renommer les fichiers.
+
+Exemple : Identifier le fichier `serverA.label_groups.<date>.log` présent dans une arborescence pour le copier à la racine en le renommant avec des éléments de l'arborescence : `device1-serverA_groups.log`.
+
+.exemple de fichier source
+[subs="+quotes"]
+----
+[green]#device1#
++-- [red]#serverA#
+  +-- category
+    +-- serverA.label_[blue]##groups##.<date>.log
+----
+
+.exemple de fichier destination
+[subs="+quotes"]
+----
+[green]#device1#-[red]##serverA##_[blue]##groups##.log
+----
+
+[source,xml]
+----
+<copy todir = "${target}" overwrite = "true">
+  <fileset dir = "${source}">
+    <include name = "**/*_groups.*.log" />
+  </fileset>
+  <mapper>
+    <chainedmapper>
+      <regexpmapper from = "^([^/]*)/([^/]*)/(.*)\.log$$"
+                      to = "\1-\2_groups.log"
+            handledirsep = "true" />    <1>
+      <flattenmapper />
+    </chainedmapper>
+  </mapper>
+</copy>
+----
+<1> La présence du paramètre `handledirsep = "true"` est importante car cela permet de résoudre le traitement des séparateurs de fichiers (i.e. `${file.separator}`, c'est à dire `\` ou `/`) sans se soucier de la plateforme sur laquelle on se trouve : win, unix.
+

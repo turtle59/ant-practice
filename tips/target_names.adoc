@@ -1,0 +1,16 @@
+= Dénomination des cibles
+:doctype: article
+:encoding: utf-8
+:lang: fr
+:author: Turtle59
+:keywords: ant, target
+:revdate: mars 2021
+:revnumber: 1.0.0
+:url-targets: https://ant.apache.org/manual/targets.html#targets
+
+
+Pour distinguer les cibles internes du reste, il est conseillé de les nommer en les préfixant par un tiret, exemple `-cibleinterne`.
+
+En faisant ainsi, ces cibles ne sont plus appelables depuis l'extérieur (_i.e. en ligne de commande_) mais uniquement par les autres cibles du projet.
+
+Source, documentation ANT:: {url-targets}
